@@ -1,4 +1,4 @@
-# smart-pantry-manager
+
 
 # Smart Pantry Manager
 
