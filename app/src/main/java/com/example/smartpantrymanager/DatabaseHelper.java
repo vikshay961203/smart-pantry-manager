@@ -1,5 +1,14 @@
 package com.example.smartpantrymanager;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import java.util.ArrayList;
+import java.util.List;
+
+
+
+
+
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -80,5 +89,77 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_RECIPES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PANTRY);
         onCreate(db);
+    }
+
+
+    // ---------------------------------------------------------------
+    // PANTRY CRUD
+    // ---------------------------------------------------------------
+
+    /** CREATE: adds a new pantry item and returns its new row id (-1 on failure). */
+    public long addIngredient(Ingredient ingredient) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_PANTRY_NAME, ingredient.getName());
+        values.put(COL_PANTRY_QUANTITY, ingredient.getQuantity());
+        values.put(COL_PANTRY_UNIT, ingredient.getUnit());
+        values.put(COL_PANTRY_EXPIRY, ingredient.getExpiryDate());
+        return db.insert(TABLE_PANTRY, null, values);
+    }
+
+    /** READ: returns every pantry item, sorted by name. */
+    public List<Ingredient> getAllIngredients() {
+        List<Ingredient> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PANTRY, null, null, null, null, null,
+                COL_PANTRY_NAME + " COLLATE NOCASE ASC");
+        while (cursor.moveToNext()) {
+            list.add(cursorToIngredient(cursor));
+        }
+        cursor.close();
+        return list;
+    }
+
+    /** READ: returns one pantry item by id, or null if it does not exist. */
+    public Ingredient getIngredient(int id) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PANTRY, null, COL_PANTRY_ID + " = ?",
+                new String[]{String.valueOf(id)}, null, null, null);
+        Ingredient ingredient = null;
+        if (cursor.moveToFirst()) {
+            ingredient = cursorToIngredient(cursor);
+        }
+        cursor.close();
+        return ingredient;
+    }
+
+    /** UPDATE: saves changes to an existing pantry item. Returns rows changed. */
+    public int updateIngredient(Ingredient ingredient) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_PANTRY_NAME, ingredient.getName());
+        values.put(COL_PANTRY_QUANTITY, ingredient.getQuantity());
+        values.put(COL_PANTRY_UNIT, ingredient.getUnit());
+        values.put(COL_PANTRY_EXPIRY, ingredient.getExpiryDate());
+        return db.update(TABLE_PANTRY, values, COL_PANTRY_ID + " = ?",
+                new String[]{String.valueOf(ingredient.getId())});
+    }
+
+    /** DELETE: removes a pantry item. Returns rows deleted. */
+    public int deleteIngredient(int id) {
+        SQLiteDatabase db = getWritableDatabase();
+        return db.delete(TABLE_PANTRY, COL_PANTRY_ID + " = ?",
+                new String[]{String.valueOf(id)});
+    }
+
+    /** Helper: converts the current cursor row into an Ingredient object. */
+    private Ingredient cursorToIngredient(Cursor cursor) {
+        Ingredient ingredient = new Ingredient();
+        ingredient.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COL_PANTRY_ID)));
+        ingredient.setName(cursor.getString(cursor.getColumnIndexOrThrow(COL_PANTRY_NAME)));
+        ingredient.setQuantity(cursor.getDouble(cursor.getColumnIndexOrThrow(COL_PANTRY_QUANTITY)));
+        ingredient.setUnit(cursor.getString(cursor.getColumnIndexOrThrow(COL_PANTRY_UNIT)));
+        ingredient.setExpiryDate(cursor.getString(cursor.getColumnIndexOrThrow(COL_PANTRY_EXPIRY)));
+        return ingredient;
     }
 }
