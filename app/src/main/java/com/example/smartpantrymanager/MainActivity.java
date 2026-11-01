@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Button;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -59,10 +60,16 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
             startActivity(intent);
         });
 
-        // Temporary entry to the Suggested Recipes screen (replaced by bottom navigation later)
-        Button btnSuggested = findViewById(R.id.btnSuggested);
-        btnSuggested.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, SuggestedRecipesActivity.class)));
+        // Bottom navigation: Pantry is the current tab, Suggested opens the recipes screen
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        bottomNav.setSelectedItemId(R.id.nav_pantry);
+        bottomNav.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.nav_suggested) {
+                startActivity(new Intent(MainActivity.this, SuggestedRecipesActivity.class));
+                return false; // keep the Pantry tab highlighted on this screen
+            }
+            return true;
+        });
 
     }
 
