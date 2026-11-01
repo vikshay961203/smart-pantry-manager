@@ -5,8 +5,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Button;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -17,9 +15,15 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The Pantry List screen. Shows every ingredient stored in the database,
@@ -29,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
 
     private RecyclerView recyclerPantry;
     private TextView tvEmpty;
+    private TextView tvExpiryAlert;
     private PantryAdapter adapter;
     private DatabaseHelper dbHelper;
 
@@ -47,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
 
         recyclerPantry = findViewById(R.id.recyclerPantry);
         tvEmpty = findViewById(R.id.tvEmpty);
+        tvExpiryAlert = findViewById(R.id.tvExpiryAlert);
         FloatingActionButton fabAdd = findViewById(R.id.fabAdd);
 
         // Connect the RecyclerView to our custom adapter
@@ -60,17 +66,19 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
             startActivity(intent);
         });
 
-        // Bottom navigation: Pantry is the current tab, Suggested opens the recipes screen
+        // Bottom navigation: Pantry is the current tab
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_pantry);
         bottomNav.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_suggested) {
                 startActivity(new Intent(MainActivity.this, SuggestedRecipesActivity.class));
                 return false; // keep the Pantry tab highlighted on this screen
+            } else if (item.getItemId() == R.id.nav_settings) {
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                return false;
             }
             return true;
         });
-
     }
 
     /**
@@ -95,6 +103,57 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
             tvEmpty.setVisibility(View.GONE);
             recyclerPantry.setVisibility(View.VISIBLE);
         }
+
+        updateExpiryAlert(ingredients);
+    }
+
+    /** Shows the warning banner if alerts are on and some items expire soon. */
+    private void updateExpiryAlert(List<Ingredient> ingredients) {
+        if (!AppSettings.isExpiryAlertsEnabled(this)) {
+            tvExpiryAlert.setVisibility(View.GONE);
+            return;
+        }
+
+        int count = countExpiringSoon(ingredients);
+        if (count == 0) {
+            tvExpiryAlert.setVisibility(View.GONE);
+        } else {
+            tvExpiryAlert.setText("Warning: " + count
+                    + (count == 1 ? " item expires" : " items expire")
+                    + " within " + AppSettings.EXPIRY_WARNING_DAYS + " days (or already expired)");
+            tvExpiryAlert.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /** Counts items whose expiry date is within the warning period, including expired ones. */
+    private int countExpiringSoon(List<Ingredient> ingredients) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        format.setLenient(false);
+
+        // The last moment of the final warning day
+        Calendar limit = Calendar.getInstance();
+        limit.add(Calendar.DAY_OF_YEAR, AppSettings.EXPIRY_WARNING_DAYS);
+        limit.set(Calendar.HOUR_OF_DAY, 23);
+        limit.set(Calendar.MINUTE, 59);
+        limit.set(Calendar.SECOND, 59);
+        Date limitDate = limit.getTime();
+
+        int count = 0;
+        for (Ingredient item : ingredients) {
+            String expiry = item.getExpiryDate();
+            if (expiry == null || expiry.trim().isEmpty()) {
+                continue; // no expiry date set
+            }
+            try {
+                Date expiryDate = format.parse(expiry.trim());
+                if (expiryDate != null && !expiryDate.after(limitDate)) {
+                    count++;
+                }
+            } catch (ParseException e) {
+                // ignore items with an unreadable date
+            }
+        }
+        return count;
     }
 
     /** A row was tapped: open the Add/Edit screen in "edit" mode, passing the item id. */

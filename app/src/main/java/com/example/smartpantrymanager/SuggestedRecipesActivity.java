@@ -1,13 +1,14 @@
 package com.example.smartpantrymanager;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.content.Intent;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity
         recyclerRecipes.setLayoutManager(new LinearLayoutManager(this));
         recyclerRecipes.setAdapter(adapter);
 
-        // Bottom navigation: Suggested is the current tab, Pantry goes back to the main screen
+        // Bottom navigation: Suggested is the current tab
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_suggested);
         bottomNav.setOnItemSelectedListener(item -> {
@@ -49,6 +50,9 @@ public class SuggestedRecipesActivity extends AppCompatActivity
                 Intent intent = new Intent(SuggestedRecipesActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
+                return false;
+            } else if (item.getItemId() == R.id.nav_settings) {
+                startActivity(new Intent(SuggestedRecipesActivity.this, SettingsActivity.class));
                 return false;
             }
             return true;
@@ -84,7 +88,6 @@ public class SuggestedRecipesActivity extends AppCompatActivity
         }
     }
 
-    /** Temporary: the Recipe Detail screen is added in the next commit. */
     /** A recipe row was tapped: open the detail screen and pass the recipe id. */
     @Override
     public void onRecipeClick(Recipe recipe) {
