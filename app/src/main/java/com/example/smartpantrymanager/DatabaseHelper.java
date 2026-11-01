@@ -24,7 +24,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "smart_pantry.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Pantry table
     public static final String TABLE_PANTRY = "pantry";
@@ -81,6 +81,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COL_RI_UNIT + " TEXT NOT NULL, "
                 + "FOREIGN KEY(" + COL_RI_RECIPE_ID + ") REFERENCES "
                 + TABLE_RECIPES + "(" + COL_RECIPE_ID + ") ON DELETE CASCADE)");
+        RecipeSeeder.seed(db);
     }
 
     @Override
