@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.content.Intent;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -71,8 +71,11 @@ public class SuggestedRecipesActivity extends AppCompatActivity
     }
 
     /** Temporary: the Recipe Detail screen is added in the next commit. */
+    /** A recipe row was tapped: open the detail screen and pass the recipe id. */
     @Override
     public void onRecipeClick(Recipe recipe) {
-        Toast.makeText(this, recipe.getName(), Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(SuggestedRecipesActivity.this, RecipeDetailActivity.class);
+        intent.putExtra(RecipeDetailActivity.EXTRA_RECIPE_ID, recipe.getId());
+        startActivity(intent);
     }
 }
