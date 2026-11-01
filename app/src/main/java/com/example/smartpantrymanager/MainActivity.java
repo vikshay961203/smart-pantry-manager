@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -57,6 +58,12 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
             Intent intent = new Intent(MainActivity.this, AddEditIngredientActivity.class);
             startActivity(intent);
         });
+
+        // Temporary entry to the Suggested Recipes screen (replaced by bottom navigation later)
+        Button btnSuggested = findViewById(R.id.btnSuggested);
+        btnSuggested.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, SuggestedRecipesActivity.class)));
+
     }
 
     /**
