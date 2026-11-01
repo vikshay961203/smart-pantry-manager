@@ -13,6 +13,7 @@
         android:paddingTop="16dp"
         android:paddingEnd="16dp"
         android:text="Suggested Recipes"
+        android:textColor="?attr/colorPrimary"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"

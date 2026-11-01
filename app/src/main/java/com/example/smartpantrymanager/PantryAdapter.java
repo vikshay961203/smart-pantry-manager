@@ -1,5 +1,6 @@
 package com.example.smartpantrymanager;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,12 +10,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Custom adapter that displays the user's pantry items in a RecyclerView.
  * Each row is built from the item_ingredient.xml layout.
+ * Expiry dates are colour-coded: red = expired, orange = expiring soon.
  */
 public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder> {
 
@@ -23,6 +30,13 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder
         void onItemClick(Ingredient ingredient);
         void onDeleteClick(Ingredient ingredient);
     }
+
+    private static final int STATUS_OK = 0;
+    private static final int STATUS_SOON = 1;
+    private static final int STATUS_EXPIRED = 2;
+
+    private static final int COLOR_EXPIRED = Color.parseColor("#E53935");
+    private static final int COLOR_SOON = Color.parseColor("#FB8C00");
 
     private List<Ingredient> ingredients = new ArrayList<>();
     private final OnItemActionListener listener;
@@ -52,11 +66,27 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder
         holder.tvName.setText(item.getName());
         holder.tvQuantity.setText(formatQuantity(item.getQuantity()) + " " + item.getUnit());
 
+        // Expiry text and colour depend on how close the date is
         String expiry = item.getExpiryDate();
+        int status = getExpiryStatus(expiry);
+
         if (expiry == null || expiry.trim().isEmpty()) {
             holder.tvExpiry.setText("No expiry date");
+        } else if (status == STATUS_EXPIRED) {
+            holder.tvExpiry.setText("Expired: " + expiry);
+        } else if (status == STATUS_SOON) {
+            holder.tvExpiry.setText("Expires soon: " + expiry);
         } else {
             holder.tvExpiry.setText("Expires: " + expiry);
+        }
+
+        // Set the colour every time, because rows are recycled while scrolling
+        if (status == STATUS_EXPIRED) {
+            holder.tvExpiry.setTextColor(COLOR_EXPIRED);
+        } else if (status == STATUS_SOON) {
+            holder.tvExpiry.setTextColor(COLOR_SOON);
+        } else {
+            holder.tvExpiry.setTextColor(holder.defaultExpiryColor);
         }
 
         holder.itemView.setOnClickListener(v -> listener.onItemClick(item));
@@ -66,6 +96,41 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder
     @Override
     public int getItemCount() {
         return ingredients.size();
+    }
+
+    /** Works out whether a yyyy-MM-dd date is expired, expiring soon, or fine. */
+    private int getExpiryStatus(String expiry) {
+        if (expiry == null || expiry.trim().isEmpty()) {
+            return STATUS_OK;
+        }
+        try {
+            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            format.setLenient(false);
+            Date expiryDate = format.parse(expiry.trim());
+            if (expiryDate == null) {
+                return STATUS_OK;
+            }
+
+            // Start of today
+            Calendar today = Calendar.getInstance();
+            today.set(Calendar.HOUR_OF_DAY, 0);
+            today.set(Calendar.MINUTE, 0);
+            today.set(Calendar.SECOND, 0);
+            today.set(Calendar.MILLISECOND, 0);
+
+            if (expiryDate.before(today.getTime())) {
+                return STATUS_EXPIRED;
+            }
+
+            Calendar limit = (Calendar) today.clone();
+            limit.add(Calendar.DAY_OF_YEAR, AppSettings.EXPIRY_WARNING_DAYS);
+            if (!expiryDate.after(limit.getTime())) {
+                return STATUS_SOON;
+            }
+        } catch (ParseException e) {
+            // unreadable date: treat as normal
+        }
+        return STATUS_OK;
     }
 
     /** Shows 250.0 as "250" and 1.5 as "1.5". */
@@ -82,6 +147,7 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder
         TextView tvQuantity;
         TextView tvExpiry;
         ImageButton btnDelete;
+        int defaultExpiryColor;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -89,6 +155,7 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.ViewHolder
             tvQuantity = itemView.findViewById(R.id.tvQuantity);
             tvExpiry = itemView.findViewById(R.id.tvExpiry);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            defaultExpiryColor = tvExpiry.getCurrentTextColor();
         }
     }
 }
