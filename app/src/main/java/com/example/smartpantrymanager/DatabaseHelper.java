@@ -163,4 +163,63 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ingredient.setExpiryDate(cursor.getString(cursor.getColumnIndexOrThrow(COL_PANTRY_EXPIRY)));
         return ingredient;
     }
+
+    // ---------------------------------------------------------------
+    // RECIPE QUERIES
+    // ---------------------------------------------------------------
+
+    /** READ: returns every recipe, each with its full ingredient list, sorted by name. */
+    public List<Recipe> getAllRecipes() {
+        List<Recipe> recipes = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_RECIPES, null, null, null, null, null,
+                COL_RECIPE_NAME + " COLLATE NOCASE ASC");
+        while (cursor.moveToNext()) {
+            Recipe recipe = cursorToRecipe(cursor);
+            recipe.setIngredients(getIngredientsForRecipe(recipe.getId()));
+            recipes.add(recipe);
+        }
+        cursor.close();
+        return recipes;
+    }
+
+    /** READ: returns one recipe by id (with its ingredients), or null if not found. */
+    public Recipe getRecipe(int recipeId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_RECIPES, null, COL_RECIPE_ID + " = ?",
+                new String[]{String.valueOf(recipeId)}, null, null, null);
+        Recipe recipe = null;
+        if (cursor.moveToFirst()) {
+            recipe = cursorToRecipe(cursor);
+            recipe.setIngredients(getIngredientsForRecipe(recipeId));
+        }
+        cursor.close();
+        return recipe;
+    }
+
+    /** READ: returns the ingredient lines that belong to one recipe. */
+    public List<RecipeIngredient> getIngredientsForRecipe(int recipeId) {
+        List<RecipeIngredient> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_RECIPE_INGREDIENTS, null,
+                COL_RI_RECIPE_ID + " = ?", new String[]{String.valueOf(recipeId)},
+                null, null, COL_RI_ID + " ASC");
+        while (cursor.moveToNext()) {
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(COL_RI_NAME));
+            double quantity = cursor.getDouble(cursor.getColumnIndexOrThrow(COL_RI_QUANTITY));
+            String unit = cursor.getString(cursor.getColumnIndexOrThrow(COL_RI_UNIT));
+            list.add(new RecipeIngredient(name, quantity, unit));
+        }
+        cursor.close();
+        return list;
+    }
+
+    /** Helper: converts the current cursor row into a Recipe (without ingredients). */
+    private Recipe cursorToRecipe(Cursor cursor) {
+        Recipe recipe = new Recipe();
+        recipe.setId(cursor.getInt(cursor.getColumnIndexOrThrow(COL_RECIPE_ID)));
+        recipe.setName(cursor.getString(cursor.getColumnIndexOrThrow(COL_RECIPE_NAME)));
+        recipe.setSteps(cursor.getString(cursor.getColumnIndexOrThrow(COL_RECIPE_STEPS)));
+        return recipe;
+    }
 }
