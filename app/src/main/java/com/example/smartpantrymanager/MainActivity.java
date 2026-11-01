@@ -15,7 +15,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.text.ParseException;
@@ -67,18 +66,7 @@ public class MainActivity extends AppCompatActivity implements PantryAdapter.OnI
         });
 
         // Bottom navigation: Pantry is the current tab
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_pantry);
-        bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_suggested) {
-                startActivity(new Intent(MainActivity.this, SuggestedRecipesActivity.class));
-                return false; // keep the Pantry tab highlighted on this screen
-            } else if (item.getItemId() == R.id.nav_settings) {
-                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
-                return false;
-            }
-            return true;
-        });
+        NavigationHelper.setup(this, R.id.nav_pantry);
     }
 
     /**

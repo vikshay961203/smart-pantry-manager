@@ -9,8 +9,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
-
 import java.util.List;
 
 /**
@@ -43,20 +41,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity
         recyclerRecipes.setAdapter(adapter);
 
         // Bottom navigation: Suggested is the current tab
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_suggested);
-        bottomNav.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.nav_pantry) {
-                Intent intent = new Intent(SuggestedRecipesActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                return false;
-            } else if (item.getItemId() == R.id.nav_settings) {
-                startActivity(new Intent(SuggestedRecipesActivity.this, SettingsActivity.class));
-                return false;
-            }
-            return true;
-        });
+        NavigationHelper.setup(this, R.id.nav_suggested);
     }
 
     /** Recalculate every time the screen is shown, so it always matches the current pantry. */
