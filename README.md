@@ -73,7 +73,7 @@ This app uses **SQLite** (via `SQLiteOpenHelper`), stored locally on the device.
 
 ## Limitations
 - The app has no location, maps or GPS features (out of scope for this project).
-- Recipes are pre-loaded and cannot be added by the user in this version.
+- Recipes ~~~~are pre-loaded and cannot be added by the user in this version.
 
 ## Author
 Vikshay Jagesur
